@@ -147,6 +147,30 @@ def D_logistic(G, D, opt, training_set, minibatch_size, reals, labels): # pylint
     loss += tf.nn.softplus(-real_scores_out)  # -log(logistic(real_scores_out)) # temporary pylint workaround # pylint: disable=invalid-unary-operand-type
     return loss
 
+def VAE_loss_with_tvsmoothing(Decoder, Encoder, opt, training_set, minibatch_size, images, labels, tv_weight=0.0001): # pylint: disable=unused-argument
+    
+    dlatents_out = fp32(Encoder.get_output_for(images, labels, is_training=True))
+    fake_images_out = Decoder.get_output_for(dlatents_out, labels, is_training=True)
+    loss = tf.reduce_mean(tf.abs(images - fake_images_out)) # reconstruction loss 
+    
+    # total variation to smooth the generated image
+    tv_y_size = images.shape[2]
+    tv_x_size = images.shape[3]
+    tv_loss = (
+            (tf.nn.l2_loss(Decoder[:, 1:, :, :] - Decoder[:, :images.shape[2] - 1, :, :]) / tv_y_size) +
+            (tf.nn.l2_loss(Decoder[:, :, 1:, :] - Decoder[:, :, :images.shape[3] - 1, :]) / tv_x_size)) / minibatch_size
+    loss += tv_loss * tv_weight
+    
+    return loss
+
+def VAE_loss(Decoder, Encoder, opt, training_set, minibatch_size, images, labels): # pylint: disable=unused-argument
+    
+    dlatents_out = fp32(Encoder.get_output_for(images, labels, is_training=True))
+    fake_images_out = Decoder.get_output_for(dlatents_out, labels, is_training=True)
+    loss = tf.reduce_mean(tf.abs(images - fake_images_out)) # reconstruction loss 
+       
+    return loss
+
 def D_logistic_simplegp(G, D, opt, training_set, minibatch_size, reals, labels, r1_gamma=10.0, r2_gamma=0.0): # pylint: disable=unused-argument
     latents = tf.random_normal([minibatch_size] + G.input_shapes[0][1:])
     fake_images_out = G.get_output_for(latents, labels, is_training=True)

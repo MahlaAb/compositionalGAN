@@ -437,9 +437,9 @@ def G_mapping(
 #----------------------------------------------------------------------------
 # Synthesis network used in the StyleGAN paper.
 
-def G_synthesis(
+def Decoder(
     dlatents_in,                        # Input: Disentangled latents (W) [minibatch, num_layers, dlatent_size].
-    dlatent_size        = 512,          # Disentangled latent (W) dimensionality.
+    dlatent_size        = 64,          # Disentangled latent (W) dimensionality.
     num_channels        = 3,            # Number of output color channels.
     resolution          = 1024,         # Output resolution.
     fmap_base           = 8192,         # Overall multiplier for the number of feature maps.
@@ -456,7 +456,7 @@ def G_synthesis(
     dtype               = 'float32',    # Data type to use for activations and outputs.
     fused_scale         = 'auto',       # True = fused convolution + scaling, False = separate ops, 'auto' = decide automatically.
     blur_filter         = [1,2,1],      # Low-pass filter to apply when resampling activations. None = no filtering.
-    structure           = 'auto',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
+    structure           = 'recursive',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
     is_template_graph   = False,        # True = template graph constructed by the Network class, False = actual evaluation.
     force_clean_graph   = False,        # True = construct a clean graph that looks nice in TensorBoard, False = default behavior.
     **_kwargs):                         # Ignore unrecognized keyword args.
@@ -527,10 +527,10 @@ def G_synthesis(
             return apply_bias(conv2d(x, fmaps=num_channels, kernel=1, gain=1, use_wscale=use_wscale))
 
     # Fixed structure: simple and efficient, but does not support progressive growing.
-    if structure == 'fixed':
-        for res in range(3, resolution_log2 + 1):
-            x = block(res, x)
-        images_out = torgb(resolution_log2, x)
+    #if structure == 'fixed':
+    #    for res in range(3, resolution_log2 + 1):
+    #        x = block(res, x)
+    #    images_out = torgb(resolution_log2, x)
 
     # Linear structure: simple but inefficient.
     if structure == 'linear':
@@ -561,11 +561,12 @@ def G_synthesis(
 #----------------------------------------------------------------------------
 # Discriminator used in the StyleGAN paper.
 
-def D_basic(
+def Encoder(
     images_in,                          # First input: Images [minibatch, channel, height, width].
     labels_in,                          # Second input: Labels [minibatch, label_size].
     num_channels        = 1,            # Number of input color channels. Overridden based on dataset.
     resolution          = 32,           # Input resolution. Overridden based on dataset.
+    dlatent_size        = 64,          # Disentangled latent (W) dimensionality.
     label_size          = 0,            # Dimensionality of the labels, 0 if no labels. Overridden based on dataset.
     fmap_base           = 8192,         # Overall multiplier for the number of feature maps.
     fmap_decay          = 1.0,          # log2 feature map reduction when doubling the resolution.
@@ -577,7 +578,7 @@ def D_basic(
     dtype               = 'float32',    # Data type to use for activations and outputs.
     fused_scale         = 'auto',       # True = fused convolution + scaling, False = separate ops, 'auto' = decide automatically.
     blur_filter         = [1,2,1],      # Low-pass filter to apply when resampling activations. None = no filtering.
-    structure           = 'auto',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
+    structure           = 'recursive',       # 'fixed' = no progressive growing, 'linear' = human-readable, 'recursive' = efficient, 'auto' = select automatically.
     is_template_graph   = False,        # True = template graph constructed by the Network class, False = actual evaluation.
     **_kwargs):                         # Ignore unrecognized keyword args.
 
@@ -594,35 +595,62 @@ def D_basic(
     labels_in = tf.cast(labels_in, dtype)
     lod_in = tf.cast(tf.get_variable('lod', initializer=np.float32(0.0), trainable=False), dtype)
     scores_out = None
+    
+    output = []
 
     # Building blocks.
     def fromrgb(x, res): # res = 2..resolution_log2
         with tf.variable_scope('FromRGB_lod%d' % (resolution_log2 - res)):
             return act(apply_bias(conv2d(x, fmaps=nf(res-1), kernel=1, gain=gain, use_wscale=use_wscale)))
+    
     def block(x, res): # res = 2..resolution_log2
         with tf.variable_scope('%dx%d' % (2**res, 2**res)):
             if res >= 3: # 8x8 and up
                 with tf.variable_scope('Conv0'):
                     x = act(apply_bias(conv2d(x, fmaps=nf(res-1), kernel=3, gain=gain, use_wscale=use_wscale)))
+                    ###
+                    with tf.variable_scope('Dense0_out'):
+                        out = act(apply_bias(dense(x, fmaps=dlatent_size, gain=gain, use_wscale=use_wscale)))
+                        out = tf.expand_dims(out, axis=1)
+                        output.append(out)
+                    ###
                 with tf.variable_scope('Conv1_down'):
                     x = act(apply_bias(conv2d_downscale2d(blur(x), fmaps=nf(res-2), kernel=3, gain=gain, use_wscale=use_wscale, fused_scale=fused_scale)))
+                    ###
+                    with tf.variable_scope('Dense1_out'):
+                        out = act(apply_bias(dense(x, fmaps=dlatent_size, gain=gain, use_wscale=use_wscale)))
+                        out = tf.expand_dims(out, axis=1)
+                        output.append(out)
+                    ###
+                    
             else: # 4x4
                 if mbstd_group_size > 1:
                     x = minibatch_stddev_layer(x, mbstd_group_size, mbstd_num_features)
                 with tf.variable_scope('Conv'):
                     x = act(apply_bias(conv2d(x, fmaps=nf(res-1), kernel=3, gain=gain, use_wscale=use_wscale)))
+                    ###
+                    with tf.variable_scope('Dense0_out'):
+                        out = act(apply_bias(dense(x, fmaps=dlatent_size, gain=gain, use_wscale=use_wscale)))
+                        out = tf.expand_dims(out, axis=1)
+                        output.append(out)
+                    ###
+                    
                 with tf.variable_scope('Dense0'):
                     x = act(apply_bias(dense(x, fmaps=nf(res-2), gain=gain, use_wscale=use_wscale)))
-                with tf.variable_scope('Dense1'):
-                    x = apply_bias(dense(x, fmaps=max(label_size, 1), gain=1, use_wscale=use_wscale))
+                    ###
+                    with tf.variable_scope('Dense1_out'):
+                        out = act(apply_bias(dense(x, fmaps=dlatent_size, gain=gain, use_wscale=use_wscale)))
+                        out = tf.expand_dims(out, axis=1)
+                        output.append(out)
+                    ###
             return x
 
     # Fixed structure: simple and efficient, but does not support progressive growing.
-    if structure == 'fixed':
-        x = fromrgb(images_in, resolution_log2)
-        for res in range(resolution_log2, 2, -1):
-            x = block(x, res)
-        scores_out = block(x, 2)
+    #if structure == 'fixed':
+    #    x = fromrgb(images_in, resolution_log2)
+    #    for res in range(resolution_log2, 2, -1):
+    #        x = block(x, res)
+    #    scores_out = block(x, 2)
 
     # Linear structure: simple but inefficient.
     if structure == 'linear':
@@ -653,9 +681,16 @@ def D_basic(
     if label_size:
         with tf.variable_scope('LabelSwitch'):
             scores_out = tf.reduce_sum(scores_out * labels_in, axis=1, keepdims=True)
+            
+    dlatents_out = None
+    
+    #for item in output:
+    for item in reversed(output):
+        if dlatents_out == None: dlatents_out = item
+        else: dlatents_out = tf.concat([dlatents_out, item], axis=1)
 
-    assert scores_out.dtype == tf.as_dtype(dtype)
-    scores_out = tf.identity(scores_out, name='scores_out')
-    return scores_out
+    assert dlatents_out.dtype == tf.as_dtype(dtype)
+    dlatents_out = tf.identity(dlatents_out, name='dlatents_out')
+    return dlatents_out
 
 #----------------------------------------------------------------------------

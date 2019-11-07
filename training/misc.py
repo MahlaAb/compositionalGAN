@@ -194,23 +194,23 @@ def apply_mirror_augment(minibatch):
 # Size and contents of the image snapshot grids that are exported
 # periodically during training.
 
-def setup_snapshot_image_grid(G, training_set,
+def setup_snapshot_image_grid(Decoder, training_set,
     size    = '1080p',      # '1080p' = to be viewed on 1080p display, '4k' = to be viewed on 4k display.
     layout  = 'random'):    # 'random' = grid contents are selected randomly, 'row_per_class' = each row corresponds to one class label.
 
     # Select size.
     gw = 1; gh = 1
     if size == '1080p':
-        gw = np.clip(1920 // G.output_shape[3], 3, 32)
-        gh = np.clip(1080 // G.output_shape[2], 2, 32)
+        gw = np.clip(1920 // Decoder.output_shape[3], 3, 32)
+        gh = np.clip(1080 // Decoder.output_shape[2], 2, 32)
     if size == '4k':
-        gw = np.clip(3840 // G.output_shape[3], 7, 32)
-        gh = np.clip(2160 // G.output_shape[2], 4, 32)
+        gw = np.clip(3840 // Decoder.output_shape[3], 7, 32)
+        gh = np.clip(2160 // Decoder.output_shape[2], 4, 32)
 
     # Initialize data arrays.
     reals = np.zeros([gw * gh] + training_set.shape, dtype=training_set.dtype)
     labels = np.zeros([gw * gh, training_set.label_size], dtype=training_set.label_dtype)
-    latents = np.random.randn(gw * gh, *G.input_shape[1:])
+    dlatents = np.random.randn(gw * gh, *Decoder.input_shape[1:])
 
     # Random layout.
     if layout == 'random':
@@ -240,6 +240,6 @@ def setup_snapshot_image_grid(G, training_set,
                     reals[x + y * gw] = real[0]
                     labels[x + y * gw] = label[0]
 
-    return (gw, gh), reals, labels, latents
+    return (gw, gh), reals, labels, dlatents
 
 #----------------------------------------------------------------------------
