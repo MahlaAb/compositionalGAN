@@ -8,3 +8,7 @@ Enabling generative adversarial networks (GANs) to learn the distribution of ima
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/faces_2parts_swap_example.png" width="600">
 </p>
 
+
+
+* Face images as composition of five parts
+
