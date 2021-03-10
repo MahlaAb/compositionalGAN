@@ -2,7 +2,7 @@
 
 Enabling generative adversarial networks (GANs) to learn the distribution of images as compositions of distributions of smaller parts
 
-* Face images as composition of two parts; one for the face and one for everything else
+* Face images composed of two parts; one for the face and one for everything else
 <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_2parts.jpg">
 <p align="center">
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_2parts_swap_example.png" width="600">
@@ -10,8 +10,14 @@ Enabling generative adversarial networks (GANs) to learn the distribution of ima
 
 
 
-* Face images as composition of five parts
+* Face images composed of five parts
 <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_5parts.jpg">
 <p align="center">
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_5parts_swap_examples.png" width="600">
 </p>
+
+
+* Bedroom images composed of two parts
+
+
+* Handwritten digits composed of four parts
