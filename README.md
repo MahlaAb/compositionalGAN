@@ -18,7 +18,7 @@ Enabling generative adversarial networks (GANs) to learn the distribution of ima
 
 
 * Bedroom images composed of two parts
-
+<img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/bedroom_2parts.jpg">
 
 * Handwritten digits composed of four parts
 <p align="center">
