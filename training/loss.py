@@ -23,8 +23,12 @@ def fp32(*values):
 #----------------------------------------------------------------------------
 # WGAN & WGAN-GP loss functions.
 
-def G_wgan(G, D, opt, training_set, minibatch_size): # pylint: disable=unused-argument
-    latents = tf.random_normal([minibatch_size] + G.input_shapes[0][1:])
+def G_wgan(G, D, opt, training_set, minibatch_size, latents_sizes = [512]): # pylint: disable=unused-argument
+    for idx, size in enumerate(latents_sizes):
+        if idx == 0:
+            latents = tf.random.normal([minibatch_size, size])
+        else:
+            latents = tf.concat([latents, tf.random.normal([minibatch_size, size])], 1)
     labels = training_set.get_random_labels_tf(minibatch_size)
     fake_images_out = G.get_output_for(latents, labels, is_training=True)
     fake_scores_out = fp32(D.get_output_for(fake_images_out, labels, is_training=True))
@@ -48,11 +52,16 @@ def D_wgan(G, D, opt, training_set, minibatch_size, reals, labels, # pylint: dis
     return loss
 
 def D_wgan_gp(G, D, opt, training_set, minibatch_size, reals, labels, # pylint: disable=unused-argument
+    latents_sizes = [512],
     wgan_lambda     = 10.0,     # Weight for the gradient penalty term.
     wgan_epsilon    = 0.001,    # Weight for the epsilon term, \epsilon_{drift}.
     wgan_target     = 1.0):     # Target value for gradient magnitudes.
 
-    latents = tf.random_normal([minibatch_size] + G.input_shapes[0][1:])
+    for idx, size in enumerate(latents_sizes):
+        if idx == 0:
+            latents = tf.random.normal([minibatch_size, size])
+        else:
+            latents = tf.concat([latents, tf.random.normal([minibatch_size, size])], 1)
     fake_images_out = G.get_output_for(latents, labels, is_training=True)
     real_scores_out = fp32(D.get_output_for(reals, labels, is_training=True))
     fake_scores_out = fp32(D.get_output_for(fake_images_out, labels, is_training=True))
