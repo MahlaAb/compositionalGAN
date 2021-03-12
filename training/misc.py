@@ -195,6 +195,7 @@ def apply_mirror_augment(minibatch):
 # periodically during training.
 
 def setup_snapshot_image_grid(G, training_set,
+    latents_sizes = [512],
     size    = '1080p',      # '1080p' = to be viewed on 1080p display, '4k' = to be viewed on 4k display.
     layout  = 'random'):    # 'random' = grid contents are selected randomly, 'row_per_class' = each row corresponds to one class label.
 
@@ -210,7 +211,11 @@ def setup_snapshot_image_grid(G, training_set,
     # Initialize data arrays.
     reals = np.zeros([gw * gh] + training_set.shape, dtype=training_set.dtype)
     labels = np.zeros([gw * gh, training_set.label_size], dtype=training_set.label_dtype)
-    latents = np.random.randn(gw * gh, *G.input_shape[1:])
+    for idx, size in enumerate(latents_sizes):
+        if idx == 0:
+            latents = np.random.randn(gw * gh, size)
+        else:
+            latents = np.concatenate((latents, np.random.randn(gw * gh, size)), axis=1)
 
     # Random layout.
     if layout == 'random':
