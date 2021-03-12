@@ -26,7 +26,6 @@ Enabling generative adversarial networks (GANs) to learn the distribution of ima
 * Handwritten digits composed of four parts
 <p align="center">
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/mnist_4parts.jpg" width="600">
-  <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/mnist_4parts_swap_examples.jpg" width="600">
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/mnist_4parts_swap_examples2.jpg" width="600">
 </p>
 
