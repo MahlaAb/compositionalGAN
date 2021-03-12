@@ -2,9 +2,8 @@
 
 Enabling generative adversarial networks (GANs) to learn the distribution of images as compositions of distributions of smaller parts
 
-For more information, please see the following paper:
-
-**Face Images as Jigsaw Puzzles: Compositional Perception of Human Faces for Machines Using Generative Adversarial Networks**<br>
+For more information, please see the paper 
+**Face Images as Jigsaw Puzzles: Compositional Perception of Human Faces for Machines Using Generative Adversarial Networks**<br> at
 http://arxiv.org/abs/2103.06331
 
 * Mode 1: Face images composed of two parts; one for the face and one for everything else
