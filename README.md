@@ -2,6 +2,9 @@
 
 Enabling generative adversarial networks (GANs) to learn the distribution of images as compositions of distributions of smaller parts
 
+## Related Paper
+You can read the related paper here: [Face Images as Jigsaw Puzzles: Compositional Perception of Human Faces for Machines Using Generative Adversarial Networks](https://arxiv.org/abs/2103.06331)
+
 ## Preparing datasets for training
 
 The training and evaluation scripts operate on datasets stored as multi-resolution TFRecords. Each dataset is represented by a directory containing the same image data in several resolutions to enable efficient streaming. There is a separate *.tfrecords file for each resolution, and if the dataset contains labels, they are stored in a separate file as well. By default, the scripts expect to find the datasets at `datasets/<NAME>/<NAME>-<RESOLUTION>.tfrecords`. The directory can be changed by editing [config.py](./config.py):
