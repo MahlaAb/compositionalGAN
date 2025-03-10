@@ -40,3 +40,10 @@ Once the datasets are set up, you can train your own PuzzleGAN network as follow
   <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_2parts_swap_example.png" width="600">
 </p>
 
+* Mode 1: Face images composed of five parts
+<p align="center">
+  <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_5parts.jpg" width="900">
+  <img src="https://github.com/MahlaAb/puzzlegan/blob/master/figures/faces_5parts_swap_example.png" width="600">
+</p>
+
+
